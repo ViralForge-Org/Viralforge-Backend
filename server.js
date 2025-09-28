@@ -35,13 +35,41 @@ settlementService.start();
 // Health Check
 app.get("/api/health", async (req, res) => {
   try {
-    res.status(200).json({ 
-      status: "healthy", 
+    res.status(200).json({
+      status: "healthy",
       settlement_service: "running",
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+// Generate secure nonce for wallet authentication
+app.get("/api/nonce", async (req, res) => {
+  try {
+    // Generate a secure nonce (at least 8 alphanumeric characters as per MiniKit docs)
+    const generateSecureNonce = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+
+    const nonce = generateSecureNonce();
+
+    // In a production app, you should store this nonce temporarily (e.g., in Redis)
+    // and associate it with the user session for verification
+
+    res.json({
+      nonce,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString() // 5 minutes
+    });
+  } catch (error) {
+    console.error("Error generating nonce:", error);
+    res.status(500).json({ message: "Failed to generate nonce", error: error.message });
   }
 });
 
